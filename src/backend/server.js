@@ -5,6 +5,7 @@ const mysql = require("mysql2");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const Response = require("./response");
+require("dotenv").config();
 const HttpStatus = {
   OK: { code: 200, status: "OK" },
   CREATED: { code: 201, status: "CREATED" },
@@ -14,16 +15,43 @@ const HttpStatus = {
   INTERNAL_SERVER_ERROR: { code: 500, status: "INTERNAL_SERVER_ERROR" },
 };
 var bcrypt = require("bcryptjs");
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "112233",
-  database: "mymovielist",
-});
 
-connection.connect((err) => {
-  if (err) throw err;
-  console.log("Connected to the MySQL database!");
+const connection = mysql.createConnection(
+  "mysql://avnadmin:AVNS_0b0WwQ_AiDOtLWumoBV@mysql-12a800b9-khattab-8149.k.aivencloud.com:18681/defaultdb?ssl-mode=REQUIRED"
+);
+
+connection.connect(error => {
+  if (error) throw error;
+  console.log('Connected to database');
+
+  connection.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(100) NOT NULL PRIMARY KEY,
+      username VARCHAR(20) NOT NULL UNIQUE,
+      password VARCHAR(300) NOT NULL
+    )`, (error) => {
+      if (error) throw error;
+      console.log('Users table created');
+    }
+  );
+
+  connection.query(`
+    CREATE TABLE IF NOT EXISTS userMovies (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      movie_id VARCHAR(200) NOT NULL,
+      title VARCHAR(200),
+      year VARCHAR(20),
+      type VARCHAR(30),
+      poster VARCHAR(500),
+      userComment TEXT,
+      userRate TINYINT UNSIGNED,
+      userId VARCHAR(50),
+      FOREIGN KEY (userId) REFERENCES users(id)
+    )`, (error) => {
+      if (error) throw error;
+      console.log('UserMovies table created');
+    }
+  );
 });
 app.use(
   cors({
@@ -154,8 +182,8 @@ app.get("/getMovies/:username", (req, res) => {
               new Response(
                 HttpStatus.OK.code,
                 HttpStatus.OK.status,
-                `${username} movies are selected`,
-                movies
+                '${username} movies are selected',
+              
               )
             );
         }
